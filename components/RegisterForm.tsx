@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { registerCandidate, RegisterState } from '@/actions/candidate'
 import { Category } from '@/types'
 
@@ -19,29 +20,25 @@ export default function RegisterForm({ categories }: Props) {
     registerCandidate,
     initialState
   )
+  const router = useRouter()
 
-  if (state.success && state.candidate) {
-    return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Registration Successful!
-        </h2>
-        <p className="text-gray-500 mb-6">
-          Welcome, {state.candidate.full_name}. Your registration is complete.
-        </p>
-        <a
-          href="/instructions"
-          className="block w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors"
-        >
-          Proceed to Instructions
-        </a>
-      </div>
-    )
+  const [formValues, setFormValues] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    category_id: '',
+  })
+
+  useEffect(() => {
+    if (state.success && state.candidate) {
+      router.push('/instructions')
+    }
+  }, [state.success, state.candidate, router])
+
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    setFormValues((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
   return (
@@ -63,6 +60,8 @@ export default function RegisterForm({ categories }: Props) {
             name="full_name"
             type="text"
             placeholder="Enter your full name"
+            value={formValues.full_name}
+            onChange={handleChange}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
           />
           {state.errors?.full_name && (
@@ -79,6 +78,8 @@ export default function RegisterForm({ categories }: Props) {
             name="email"
             type="email"
             placeholder="Enter your email address"
+            value={formValues.email}
+            onChange={handleChange}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
           />
           {state.errors?.email && (
@@ -95,6 +96,8 @@ export default function RegisterForm({ categories }: Props) {
             name="phone"
             type="tel"
             placeholder="e.g. 08012345678"
+            value={formValues.phone}
+            onChange={handleChange}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
           />
           {state.errors?.phone && (
@@ -109,6 +112,8 @@ export default function RegisterForm({ categories }: Props) {
           <select
             id="category_id"
             name="category_id"
+            value={formValues.category_id}
+            onChange={handleChange}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
           >
             <option value="">-- Select your qualification category --</option>

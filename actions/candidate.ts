@@ -1,5 +1,6 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { registrationSchema } from '@/lib/validations/candidate'
 
@@ -64,6 +65,16 @@ export async function registerCandidate(
       },
     }
   }
+
+  // Set candidate_id cookie after successful registration
+  const cookieStore = await cookies()
+  cookieStore.set('candidate_id', data.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 *2, //2 hours
+   path: '/',
+  })
 
   return {
     success: true,
