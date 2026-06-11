@@ -81,3 +81,47 @@ export async function registerCandidate(
     candidate: data,
   }
 }
+
+export type ResumeState = {
+  success: boolean
+  error?: string
+}
+
+export async function resumeSession(
+  _prevState: ResumeState,
+  formData: FormData
+): Promise<ResumeState> {
+  const email = (formData.get('email') as string)?.toLowerCase().trim()
+
+  if (!email) {
+    return { success: false, error: 'Please enter your email address' }
+  }
+
+  const supabase = await createClient()
+
+  // Find candidate by email
+  const { data: candidate } = await supabase
+    .from('candidates')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (!candidate) {
+    return {
+      success: false,
+      error: 'No registration found for this email address',
+    }
+  }
+
+  // Re-set the cookie on this device
+  const cookieStore = await cookies()
+  cookieStore.set('candidate_id', candidate.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 2,
+    path: '/',
+  })
+
+  return { success: true }
+}
