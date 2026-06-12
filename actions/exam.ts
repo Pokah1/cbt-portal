@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { sendResultEmails } from '@/lib/emails/sendResultEmails'
 
 export async function beginExam(candidateId: string, examId: string) {
   const supabase = await createClient()
@@ -19,10 +20,7 @@ export async function beginExam(candidateId: string, examId: string) {
 
   const { data, error } = await supabase
     .from('attempts')
-    .insert({
-      candidate_id: candidateId,
-      exam_id: examId,
-    })
+    .insert({ candidate_id: candidateId, exam_id: examId })
     .select('id')
     .single()
 
@@ -51,10 +49,7 @@ export async function saveAnswer(
       { onConflict: 'attempt_id,question_id' }
     )
 
-  if (error) {
-    return { success: false }
-  }
-
+  if (error) return { success: false }
   return { success: true }
 }
 
@@ -64,14 +59,16 @@ export async function submitExam(
 ) {
   const supabase = await createAdminClient()
 
+  // Get attempt
   const { data: attempt } = await supabase
     .from('attempts')
-    .select('exam_id')
+    .select('exam_id, candidate_id')
     .eq('id', attemptId)
     .single()
 
   if (!attempt) return { success: false }
 
+  // Get sections and questions for scoring
   const { data: sections } = await supabase
     .from('sections')
     .select('questions(id, correct_option, marks)')
@@ -80,7 +77,12 @@ export async function submitExam(
   if (!sections) return { success: false }
 
   const allQuestions = (sections ?? []).flatMap(
-    (s) => s.questions as { id: string; correct_option: string; marks: number }[]
+    (s) =>
+      s.questions as {
+        id: string
+        correct_option: string
+        marks: number
+      }[]
   )
 
   let score = 0
@@ -100,19 +102,82 @@ export async function submitExam(
     }
   })
 
+  // Upsert answers
   await supabase
     .from('answers')
     .upsert(answerUpdates, { onConflict: 'attempt_id,question_id' })
 
+  // Mark attempt complete
+  const submittedAt = new Date().toISOString()
   await supabase
     .from('attempts')
     .update({
       is_completed: true,
-      submitted_at: new Date().toISOString(),
+      submitted_at: submittedAt,
       score,
       total_marks: totalMarks,
     })
     .eq('id', attemptId)
+
+  // Fetch data needed for emails
+  const { data: candidate } = await supabase
+    .from('candidates')
+    .select('full_name, email, phone, category_id')
+    .eq('id', attempt.candidate_id)
+    .single()
+
+  if (candidate) {
+    const { data: category } = await supabase
+      .from('categories')
+      .select('name')
+      .eq('id', candidate.category_id)
+      .single()
+
+    const { data: exam } = await supabase
+      .from('exams')
+      .select('title')
+      .eq('id', attempt.exam_id)
+      .single()
+
+    // Build section breakdown for email
+    const { data: sectionData } = await supabase
+      .from('sections')
+      .select('title, order_index, questions(id, marks)')
+      .eq('exam_id', attempt.exam_id)
+      .order('order_index')
+
+    const answersMap = Object.fromEntries(
+      answerUpdates.map((a) => [a.question_id, a])
+    )
+
+    const sectionBreakdown = (sectionData ?? []).map((section) => {
+      const questions = section.questions as { id: string; marks: number }[]
+      const sectionTotal = questions.reduce((sum, q) => sum + q.marks, 0)
+      const sectionScore = questions.reduce((sum, q) => {
+        const answer = answersMap[q.id]
+        return sum + (answer?.is_correct ? q.marks : 0)
+      }, 0)
+      return {
+        title: section.title,
+        score: sectionScore,
+        total: sectionTotal,
+      }
+    })
+
+    if (category && exam) {
+      await sendResultEmails({
+        candidate,
+        category,
+        exam,
+        attempt: {
+          score,
+          total_marks: totalMarks,
+          submitted_at: submittedAt,
+        },
+        sectionBreakdown,
+      })
+    }
+  }
 
   return { success: true, score, totalMarks }
 }
