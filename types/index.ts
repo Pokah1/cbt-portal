@@ -56,6 +56,7 @@ export type Attempt = {
   total_marks: number | null
   is_completed: boolean
   created_at?: string
+  tab_switches: number
 }
 
 export type Answer = {

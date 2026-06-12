@@ -31,9 +31,8 @@ export default function QuestionCard({
   onAnswer,
 }: Props) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 select-none">
 
-      {/* Section label and progress */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
           {question.section_title}
@@ -43,12 +42,10 @@ export default function QuestionCard({
         </span>
       </div>
 
-      {/* Question body */}
       <p className="text-gray-900 font-medium text-base leading-relaxed mb-6">
         {question.body}
       </p>
 
-      {/* Options */}
       <div className="space-y-3">
         {options.map(({ key, field }) => {
           const isSelected = selectedOption === key

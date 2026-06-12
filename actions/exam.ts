@@ -181,3 +181,15 @@ export async function submitExam(
 
   return { success: true, score, totalMarks }
 }
+
+export async function recordTabSwitch(attemptId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc('increment_tab_switches', {
+    attempt_id: attemptId,
+  })
+
+  if (error) return { success: false, count: 0 }
+
+  return { success: true, count: data as number }
+}
