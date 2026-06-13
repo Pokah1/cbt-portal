@@ -49,6 +49,8 @@ export default function ExamClient({
   const [showCalculatorPanel, setShowCalculatorPanel] = useState(false);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [showTabWarning, setShowTabWarning] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+
   const hasAutoSubmitted = useRef(false);
 
   const currentQuestion = questions[currentIndex];
@@ -56,27 +58,29 @@ export default function ExamClient({
   const totalQuestions = questions.length;
 
   const handleSubmit = useCallback(
-    async (isAuto = false) => {
-      if (hasAutoSubmitted.current) return;
-      hasAutoSubmitted.current = true;
-      setIsSubmitting(true);
+  async (isAuto = false) => {
+    if (hasAutoSubmitted.current) return
 
-      if (!isAuto) {
-        const confirmed = window.confirm(
-          `You have answered ${answeredCount} of ${totalQuestions} questions. Submit now?`,
-        );
-        if (!confirmed) {
-          hasAutoSubmitted.current = false;
-          setIsSubmitting(false);
-          return;
-        }
-      }
+    if (!isAuto) {
+      setShowConfirmModal(true)
+      return
+    }
 
-      await submitExam(attempt.id, answers);
-      router.push("/results");
-    },
-    [answeredCount, totalQuestions, attempt.id, answers, router],
-  );
+    hasAutoSubmitted.current = true
+    setIsSubmitting(true)
+    await submitExam(attempt.id, answers)
+    router.push('/results')
+  },
+  [attempt.id, answers, router]
+)
+
+async function handleConfirmSubmit() {
+  setShowConfirmModal(false)
+  hasAutoSubmitted.current = true
+  setIsSubmitting(true)
+  await submitExam(attempt.id, answers)
+  router.push('/results')
+}
 
   const handleTimeUp = useCallback(() => {
     handleSubmit(true);
@@ -149,6 +153,67 @@ export default function ExamClient({
           </div>
         </div>
       )}
+      {/* Submit confirmation modal */}
+{showConfirmModal && (
+  <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-8 max-w-md w-full">
+
+      {/* Icon */}
+      <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
+        <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+
+      <h2 className="text-xl font-bold text-white text-center mb-2">
+        Submit Your Exam?
+      </h2>
+      <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">
+        You have answered{' '}
+        <span className="text-white font-bold">{answeredCount}</span> of{' '}
+        <span className="text-white font-bold">{totalQuestions}</span>{' '}
+        questions. This action cannot be undone.
+      </p>
+
+      {/* Answer summary */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {[
+          { label: 'Answered', value: answeredCount, color: 'text-emerald-400' },
+          { label: 'Unanswered', value: totalQuestions - answeredCount, color: 'text-yellow-400' },
+          { label: 'Total', value: totalQuestions, color: 'text-white' },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className="bg-white/5 border border-white/10 rounded-xl p-3 text-center"
+          >
+            <p className={`text-2xl font-black ${stat.color}`}>
+              {stat.value}
+            </p>
+            <p className="text-slate-500 text-xs mt-0.5">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => setShowConfirmModal(false)}
+          className="flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-300 font-semibold hover:bg-white/5 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleConfirmSubmit}
+          disabled={isSubmitting}
+          className="flex-1 px-4 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold disabled:opacity-50 transition-all hover:shadow-lg hover:shadow-emerald-500/25"
+        >
+          {isSubmitting ? 'Submitting...' : 'Yes, Submit'}
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
 
       {/* Top bar */}
       <div className="bg-slate-900 border-b border-white/5 sticky top-0 z-10">

@@ -32,3 +32,38 @@ export async function adminLogout() {
   const cookieStore = await cookies()
   cookieStore.delete('admin_session')
 }
+
+export async function deleteCandidate(candidateId: string) {
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const supabase = createAdminClient()
+
+  // Get all attempt IDs for this candidate
+  const { data: attempts } = await supabase
+    .from('attempts')
+    .select('id')
+    .eq('candidate_id', candidateId)
+
+  const attemptIds = (attempts ?? []).map((a) => a.id)
+
+  // Delete answers first (child records)
+  if (attemptIds.length > 0) {
+    await supabase
+      .from('answers')
+      .delete()
+      .in('attempt_id', attemptIds)
+  }
+
+  // Delete attempts
+  await supabase
+    .from('attempts')
+    .delete()
+    .eq('candidate_id', candidateId)
+
+  // Delete candidate
+  await supabase
+    .from('candidates')
+    .delete()
+    .eq('id', candidateId)
+
+  return { success: true }
+}

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import DeleteCandidateButton from '@/components/DeleteCandidateButton'
+
 
 export default async function CandidateDetailPage({
   params,
@@ -266,6 +268,17 @@ export default async function CandidateDetailPage({
         )}
 
       </div>
+      {/* Danger zone */}
+<div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-6">
+  <p className="text-xs font-semibold text-red-400 uppercase tracking-widest mb-2">
+    Danger Zone
+  </p>
+  <p className="text-slate-400 text-sm mb-4">
+    Permanently delete this candidate and all their exam data. This
+    action cannot be undone.
+  </p>
+  <DeleteCandidateButton candidateId={candidate.id} />
+</div>
     </div>
   )
 }

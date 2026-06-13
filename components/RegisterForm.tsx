@@ -110,19 +110,25 @@ export default function RegisterForm({ categories }: Props) {
             Assessment Category
           </label>
           <select
-            id="category_id"
-            name="category_id"
-            value={formValues.category_id}
-            onChange={handleChange}
-            className={`${inputClass} bg-slate-900`}
-          >
-            <option value="">-- Select your qualification --</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name} — {category.description}
-              </option>
-            ))}
-          </select>
+  id="category_id"
+  name="category_id"
+  value={formValues.category_id}
+  onChange={handleChange}
+  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm"
+>
+  <option value="" className="bg-slate-900 text-slate-400">
+    -- Select your qualification --
+  </option>
+  {categories.map((category) => (
+    <option
+      key={category.id}
+      value={category.id}
+      className="bg-slate-900 text-white"
+    >
+      {category.name} — {category.description}
+    </option>
+  ))}
+</select>
           {state.errors?.category_id && (
             <p className={errorClass}>{state.errors.category_id[0]}</p>
           )}
