@@ -11,6 +11,13 @@
     padding: 0;
   }
 
+  
+  html,
+body {
+  background-color: #020617;
+  overscroll-behavior: none;
+}
+
   html {
     scroll-behavior: smooth;
   }

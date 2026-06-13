@@ -84,7 +84,7 @@ export default function Home() {
         </div>
 
         {/* Stats row */}
-        <div className="flex flex-wrap items-center justify-center gap-8 mt-16 pt-16 border-t border-white/5 w-full max-w-2xl">
+        <div className="flex flex-wrap items-center justify-center gap-8 mt-16 pt-16 border-t border-white/5 w-full max-w-2xl mb-2">
           {[
             { value: '100%', label: 'Secure & Timed' },
             { value: '2', label: 'Assessment Categories' },

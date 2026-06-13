@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={jakarta.variable} data-scroll-behavior="smooth">
-      <body className="font-jakarta antialiased bg-slate-50 text-slate-900">
+      <body className="font-jakarta antialiased bg-slate-950 text-slate-900">
         {children}
       </body>
     </html>
