@@ -19,15 +19,15 @@ export default function QuestionNav({
   const answeredCount = Object.keys(answers).length
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+    <div className="bg-slate-900 border border-white/10 rounded-2xl p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-800 text-sm">Questions</h3>
-        <span className="text-xs text-gray-500">
-          {answeredCount}/{questions.length} answered
+        <h3 className="font-bold text-white text-sm">Questions</h3>
+        <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+          {answeredCount}/{questions.length}
         </span>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5 gap-1.5">
         {questions.map((q, index) => {
           const isAnswered = !!answers[q.id]
           const isCurrent = index === currentIndex
@@ -38,10 +38,10 @@ export default function QuestionNav({
               onClick={() => onSelect(index)}
               className={`w-full aspect-square rounded-lg text-xs font-bold transition-all ${
                 isCurrent
-                  ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                  ? 'bg-emerald-500 text-white ring-2 ring-emerald-400/50'
                   : isAnswered
-                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                  : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'
               }`}
             >
               {index + 1}
@@ -50,19 +50,14 @@ export default function QuestionNav({
         })}
       </div>
 
-      {/* Legend */}
-      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4 text-xs text-gray-500">
+      <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-4 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-green-100 inline-block" />
+          <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 inline-block" />
           Answered
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-gray-100 inline-block" />
+          <span className="w-2.5 h-2.5 rounded bg-white/5 inline-block" />
           Unanswered
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded bg-blue-600 inline-block" />
-          Current
         </span>
       </div>
     </div>

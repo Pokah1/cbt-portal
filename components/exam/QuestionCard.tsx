@@ -31,44 +31,44 @@ export default function QuestionCard({
   onAnswer,
 }: Props) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 select-none">
+    <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 select-none">
 
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+      <div className="flex items-center justify-between mb-5">
+        <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
           {question.section_title}
         </span>
-        <span className="text-sm text-gray-400">
-          Question {questionNumber} of {totalQuestions}
+        <span className="text-slate-400 text-xs font-medium">
+          {questionNumber} / {totalQuestions}
         </span>
       </div>
 
-      <p className="text-gray-900 font-medium text-base leading-relaxed mb-6">
+      <p className="text-white font-medium text-base leading-relaxed mb-6">
         {question.body}
       </p>
 
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {options.map(({ key, field }) => {
           const isSelected = selectedOption === key
           return (
             <button
               key={key}
               onClick={() => onAnswer(key)}
-              className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all flex items-center gap-3 ${
+              className={`w-full text-left px-4 py-3.5 rounded-xl border transition-all flex items-center gap-3 group ${
                 isSelected
-                  ? 'border-blue-500 bg-blue-50 text-blue-900'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700'
+                  ? 'border-emerald-500 bg-emerald-500/10 text-white'
+                  : 'border-white/10 hover:border-white/20 hover:bg-white/5 text-slate-300'
               }`}
             >
               <span
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 transition-all ${
                   isSelected
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-white/5 text-slate-400 group-hover:bg-white/10'
                 }`}
               >
                 {key}
               </span>
-              <span>{question[field]}</span>
+              <span className="text-sm">{question[field]}</span>
             </button>
           )
         })}

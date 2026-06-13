@@ -1,283 +1,271 @@
-import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
-import Link from "next/link";
+import { createClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
 
 export default async function CandidateDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }) {
-  const { id } = await params;
-  const supabase = await createClient();
+  const { id } = await params
+  const supabase = await createClient()
 
-  // Get candidate
   const { data: candidate } = await supabase
-    .from("candidates")
-    .select("id, full_name, email, phone, created_at, category_id")
-    .eq("id", id)
-    .single();
+    .from('candidates')
+    .select('id, full_name, email, phone, created_at, category_id')
+    .eq('id', id)
+    .single()
 
-  if (!candidate) notFound();
+  if (!candidate) notFound()
 
-  // Get category
   const { data: category } = await supabase
-    .from("categories")
-    .select("name")
-    .eq("id", candidate.category_id)
-    .single();
+    .from('categories')
+    .select('name')
+    .eq('id', candidate.category_id)
+    .single()
 
-  // Get exam
   const { data: exam } = await supabase
-    .from("exams")
-    .select("id, title, duration_minutes")
-    .eq("category_id", candidate.category_id)
-    .single();
+    .from('exams')
+    .select('id, title, duration_minutes')
+    .eq('category_id', candidate.category_id)
+    .single()
 
-  if (!exam) notFound();
+  if (!exam) notFound()
 
-  // Get attempt
   const { data: attempt } = await supabase
-    .from("attempts")
-    .select(
-      "id, score, total_marks, started_at, submitted_at, is_completed, tab_switches",
-    )
-    .eq("candidate_id", id)
-    .eq("exam_id", exam.id)
-    .maybeSingle();
+    .from('attempts')
+    .select('id, score, total_marks, started_at, submitted_at, is_completed, tab_switches')
+    .eq('candidate_id', id)
+    .eq('exam_id', exam.id)
+    .maybeSingle()
 
-  // Get sections
   const { data: sections } = await supabase
-    .from("sections")
-    .select("id, title, order_index, questions(id, marks)")
-    .eq("exam_id", exam.id)
-    .order("order_index");
+    .from('sections')
+    .select('id, title, order_index, questions(id, marks)')
+    .eq('exam_id', exam.id)
+    .order('order_index')
 
-  // Get answers if attempt exists
   const { data: answers } = attempt
     ? await supabase
-        .from("answers")
-        .select("question_id, selected_option, is_correct")
-        .eq("attempt_id", attempt.id)
-    : { data: [] };
+        .from('answers')
+        .select('question_id, selected_option, is_correct')
+        .eq('attempt_id', attempt.id)
+    : { data: [] }
 
   const answersMap = Object.fromEntries(
-    (answers ?? []).map((a) => [a.question_id, a]),
-  );
+    (answers ?? []).map((a) => [a.question_id, a])
+  )
 
   const sectionBreakdown = (sections ?? []).map((section) => {
-    const questions = section.questions as { id: string; marks: number }[];
-    const sectionTotal = questions.reduce((sum, q) => sum + q.marks, 0);
-    const sectionScore = questions.reduce((sum, q) => {
-      return sum + (answersMap[q.id]?.is_correct ? q.marks : 0);
-    }, 0);
+    const questions = section.questions as { id: string; marks: number }[]
+    const sectionTotal = questions.reduce((sum, q) => sum + q.marks, 0)
+    const sectionScore = questions.reduce(
+      (sum, q) => sum + (answersMap[q.id]?.is_correct ? q.marks : 0),
+      0
+    )
     const attempted = questions.filter(
-      (q) => answersMap[q.id]?.selected_option,
-    ).length;
-
+      (q) => answersMap[q.id]?.selected_option
+    ).length
     return {
       title: section.title,
       score: sectionScore,
       total: sectionTotal,
       attempted,
       questionCount: questions.length,
-    };
-  });
+    }
+  })
 
-  const score = attempt?.score ?? 0;
-  const totalMarks = attempt?.total_marks ?? 0;
+  const score = attempt?.score ?? 0
+  const totalMarks = attempt?.total_marks ?? 0
   const percentage =
-    totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
-  const isPassed = percentage >= 50;
+    totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0
+  const isPassed = percentage >= 50
 
   const timeTaken =
     attempt?.submitted_at && attempt?.started_at
       ? Math.round(
           (new Date(attempt.submitted_at).getTime() -
             new Date(attempt.started_at).getTime()) /
-            1000 /
-            60,
+            1000 / 60
         )
-      : null;
+      : null
+
+  const correctCount = answers?.filter((a) => a.is_correct).length ?? 0
+  const incorrectCount =
+    answers?.filter((a) => a.selected_option && !a.is_correct).length ?? 0
+  const attemptedCount =
+    answers?.filter((a) => a.selected_option).length ?? 0
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* Back link */}
-      <Link
-        href="/admin"
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm mb-6 transition-colors"
-      >
-        ← Back to Dashboard
-      </Link>
+    <div className="min-h-screen bg-slate-950">
 
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {candidate.full_name}
-        </h1>
-        <p className="text-gray-400 text-sm mt-1">Candidate Detail View</p>
-      </div>
-
-      {/* Candidate info */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4">
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
-          Personal Information
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[
-            { label: "Full Name", value: candidate.full_name },
-            { label: "Email", value: candidate.email },
-            { label: "Phone", value: candidate.phone },
-            { label: "Category", value: category?.name ?? "—" },
-            {
-              label: "Registered",
-              value: new Date(candidate.created_at!).toLocaleString("en-NG", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              }),
-            },
-            {
-              label: "Exam",
-              value: exam.title,
-            },
-            { label: "Tab Switches", value: attempt?.tab_switches ?? 0 },
-          ].map((row) => (
-            <div key={row.label}>
-              <p className="text-xs text-gray-400 mb-0.5">{row.label}</p>
-              <p className="text-sm font-medium text-gray-900">{row.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Score card */}
-      {attempt?.is_completed ? (
-        <>
-          <div
-            className={`rounded-2xl border shadow-sm p-6 mb-4 text-center ${
-              isPassed
-                ? "bg-green-50 border-green-200"
-                : "bg-red-50 border-red-200"
-            }`}
+      {/* Top bar */}
+      <div className="bg-slate-900 border-b border-white/5 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span className="text-white font-bold text-xl tracking-tight">Assessly</span>
+            </Link>
+            <span className="text-slate-600 text-sm hidden sm:block">/ Admin / Candidate</span>
+          </div>
+          <Link
+            href="/admin"
+            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-xl transition-colors"
           >
-            <div
-              className={`text-6xl font-black mb-1 ${
-                isPassed ? "text-green-600" : "text-red-500"
-              }`}
-            >
-              {percentage}%
-            </div>
-            <p
-              className={`font-semibold ${
-                isPassed ? "text-green-700" : "text-red-600"
-              }`}
-            >
-              {isPassed ? "✓ Pass" : "✗ Fail"}
-            </p>
-            <p className="text-gray-500 text-sm mt-1">
-              {score} out of {totalMarks} marks
-            </p>
-            {timeTaken !== null && (
-              <p className="text-gray-400 text-xs mt-1">
-                Completed in {timeTaken} minute{timeTaken !== 1 ? "s" : ""}
-              </p>
-            )}
-            {(attempt?.tab_switches ?? 0) > 0 && (
-              <p className="text-red-400 text-xs mt-1">
-                {attempt.tab_switches} tab switch
-                {attempt.tab_switches !== 1 ? "es" : ""} recorded
-              </p>
-            )}
-
-            {attempt.submitted_at && (
-              <p className="text-gray-400 text-xs mt-1">
-                Submitted{" "}
-                {new Date(attempt.submitted_at).toLocaleString("en-NG", {
-                  dateStyle: "long",
-                  timeStyle: "short",
-                })}
-              </p>
-            )}
-          </div>
-
-          {/* Section breakdown */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
-              Section Breakdown
-            </h2>
-            <div className="space-y-5">
-              {sectionBreakdown.map((section) => {
-                const sectionPct =
-                  section.total > 0
-                    ? Math.round((section.score / section.total) * 100)
-                    : 0;
-                const sectionPassed = sectionPct >= 50;
-
-                return (
-                  <div key={section.title}>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium text-gray-800 text-sm">
-                        {section.title}
-                      </span>
-                      <div className="text-right">
-                        <span className="text-sm font-semibold text-gray-700">
-                          {section.score}/{section.total} marks
-                        </span>
-                        <span className="text-xs text-gray-400 ml-2">
-                          ({section.attempted}/{section.questionCount}{" "}
-                          attempted)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2.5">
-                      <div
-                        className={`h-2.5 rounded-full ${
-                          sectionPassed ? "bg-green-500" : "bg-red-400"
-                        }`}
-                        style={{ width: `${sectionPct}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">{sectionPct}%</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Summary */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">
-              Answer Summary
-            </h2>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {answers?.filter((a) => a.selected_option).length ?? 0}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">Attempted</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">
-                  {answers?.filter((a) => a.is_correct).length ?? 0}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">Correct</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-500">
-                  {answers?.filter((a) => a.selected_option && !a.is_correct)
-                    .length ?? 0}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">Incorrect</p>
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 text-center">
-          <p className="text-yellow-700 font-medium">
-            This candidate has not completed the exam yet.
-          </p>
+            ← Dashboard
+          </Link>
         </div>
-      )}
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 py-8 space-y-4">
+
+        {/* Header */}
+        <div className="mb-2">
+          <h1 className="text-2xl font-extrabold text-white">
+            {candidate.full_name}
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">Candidate Detail View</p>
+        </div>
+
+        {/* Candidate info */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+            Personal Information
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { label: 'Full Name', value: candidate.full_name },
+              { label: 'Email Address', value: candidate.email },
+              { label: 'Phone Number', value: candidate.phone },
+              { label: 'Category', value: category?.name ?? '—' },
+              { label: 'Exam', value: exam.title },
+              {
+                label: 'Registered',
+                value: new Date(candidate.created_at!).toLocaleString(
+                  'en-NG',
+                  { dateStyle: 'medium', timeStyle: 'short' }
+                ),
+              },
+            ].map((row) => (
+              <div key={row.label} className="bg-white/5 rounded-xl px-4 py-3">
+                <p className="text-xs text-slate-500 mb-1">{row.label}</p>
+                <p className="text-white font-semibold text-sm">{row.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {attempt?.is_completed ? (
+          <>
+            {/* Score hero */}
+            <div className={`rounded-2xl border p-8 text-center ${
+              isPassed
+                ? 'bg-emerald-500/10 border-emerald-500/20'
+                : 'bg-red-500/10 border-red-500/20'
+            }`}>
+              <div className={`text-7xl font-black mb-2 ${
+                isPassed ? 'text-emerald-400' : 'text-red-400'
+              }`}>
+                {percentage}%
+              </div>
+              <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold mb-2 ${
+                isPassed
+                  ? 'bg-emerald-500/20 text-emerald-300'
+                  : 'bg-red-500/20 text-red-300'
+              }`}>
+                {isPassed ? '✓ Pass' : '✗ Fail'}
+              </div>
+              <p className="text-slate-400 text-sm">
+                {score} out of {totalMarks} marks
+              </p>
+              {timeTaken !== null && (
+                <p className="text-slate-500 text-xs mt-1">
+                  Completed in {timeTaken} minute{timeTaken !== 1 ? 's' : ''}
+                </p>
+              )}
+              {(attempt.tab_switches ?? 0) > 0 && (
+                <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold px-3 py-1.5 rounded-full mt-3">
+                  ⚠ {attempt.tab_switches} tab switch
+                  {attempt.tab_switches !== 1 ? 'es' : ''} recorded
+                </div>
+              )}
+            </div>
+
+            {/* Summary stats */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Attempted', value: attemptedCount, color: 'text-white' },
+                { label: 'Correct', value: correctCount, color: 'text-emerald-400' },
+                { label: 'Incorrect', value: incorrectCount, color: 'text-red-400' },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center"
+                >
+                  <p className={`text-3xl font-black ${stat.color}`}>
+                    {stat.value}
+                  </p>
+                  <p className="text-slate-500 text-xs mt-1">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Section breakdown */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+                Section Breakdown
+              </p>
+              <div className="space-y-5">
+                {sectionBreakdown.map((section) => {
+                  const sectionPct =
+                    section.total > 0
+                      ? Math.round((section.score / section.total) * 100)
+                      : 0
+                  const sectionPassed = sectionPct >= 50
+                  return (
+                    <div key={section.title}>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white font-semibold text-sm">
+                          {section.title}
+                        </span>
+                        <div className="text-right">
+                          <span className="text-white font-bold text-sm">
+                            {section.score}/{section.total}
+                          </span>
+                          <span className="text-slate-500 text-xs ml-2">
+                            ({section.attempted}/{section.questionCount} attempted)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-white/5 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${
+                            sectionPassed ? 'bg-emerald-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${sectionPct}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">{sectionPct}%</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-6 text-center">
+            <p className="text-yellow-400 font-semibold">
+              This candidate has not completed the exam yet.
+            </p>
+          </div>
+        )}
+
+      </div>
     </div>
-  );
+  )
 }

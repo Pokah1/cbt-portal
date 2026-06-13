@@ -10,36 +10,27 @@ const initialState = {
 }
 
 export default function AdminLoginForm() {
-  const [state, formAction, isPending] = useActionState(
-    adminLogin,
-    initialState
-  )
+  const [state, formAction, isPending] = useActionState(adminLogin, initialState)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    if (state.success) {
-      router.push('/admin')
-    }
+    if (state.success) router.push('/admin')
   }, [state.success, router])
 
   return (
-    <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8">
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
       <form action={formAction} className="space-y-4">
-
         {state.error && (
-          <div className="bg-red-950 border border-red-800 text-red-400 px-4 py-3 rounded-xl text-sm">
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
             {state.error}
           </div>
         )}
 
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-300 mb-1.5"
-          >
-            Admin Password
+          <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5">
+            Password
           </label>
           <div className="relative">
             <input
@@ -49,12 +40,12 @@ export default function AdminLoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter admin password"
-              className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm pr-11"
             />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
             >
               {showPassword ? (
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -73,11 +64,10 @@ export default function AdminLoginForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all hover:shadow-lg hover:shadow-emerald-500/25"
         >
-          {isPending ? 'Verifying...' : 'Access Dashboard'}
+          {isPending ? 'Verifying...' : 'Access Dashboard →'}
         </button>
-
       </form>
     </div>
   )

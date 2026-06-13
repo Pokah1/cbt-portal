@@ -23,45 +23,33 @@ export default function ResumeForm() {
   }, [state.success, router])
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-      <div className="mb-5">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Already Registered?
-        </h2>
-        <p className="text-gray-500 text-sm mt-1">
-          Enter your email to resume your session on this device
-        </p>
-      </div>
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+      <h2 className="text-white font-bold text-lg mb-1">Already Registered?</h2>
+      <p className="text-slate-400 text-sm mb-5">
+        Enter your email to resume on this device
+      </p>
 
       <form action={formAction} className="space-y-4">
         {state.error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
             {state.error}
           </div>
         )}
 
-        <div>
-          <label
-            htmlFor="resume_email"
-            className="block text-sm font-medium text-gray-700 mb-1.5"
-          >
-            Email Address
-          </label>
-          <input
-            id="resume_email"
-            name="email"
-            type="email"
-            placeholder="Enter your registered email"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-          />
-        </div>
+        <input
+          id="resume_email"
+          name="email"
+          type="email"
+          placeholder="Enter your registered email"
+          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm"
+        />
 
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-gray-800 text-white py-3 rounded-xl font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
         >
-          {isPending ? 'Looking up your session...' : 'Resume Session'}
+          {isPending ? 'Looking up session...' : 'Resume Session →'}
         </button>
       </form>
     </div>

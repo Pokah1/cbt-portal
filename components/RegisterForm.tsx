@@ -15,13 +15,18 @@ const initialState: RegisterState = {
   candidate: null,
 }
 
+const inputClass =
+  'w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm'
+
+const labelClass = 'block text-sm font-medium text-slate-300 mb-1.5'
+const errorClass = 'text-red-400 text-xs mt-1.5'
+
 export default function RegisterForm({ categories }: Props) {
   const [state, formAction, isPending] = useActionState(
     registerCandidate,
     initialState
   )
   const router = useRouter()
-
   const [formValues, setFormValues] = useState({
     full_name: '',
     email: '',
@@ -42,55 +47,50 @@ export default function RegisterForm({ categories }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-      <form action={formAction} className="space-y-5">
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+      <h2 className="text-white font-bold text-lg mb-5">New Candidate</h2>
 
+      <form action={formAction} className="space-y-4">
         {state.errors?.general && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
             {state.errors.general[0]}
           </div>
         )}
 
         <div>
-          <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Full Name
-          </label>
+          <label htmlFor="full_name" className={labelClass}>Full Name</label>
           <input
             id="full_name"
             name="full_name"
             type="text"
-            placeholder="Enter your full name"
+            placeholder="e.g. Chukwuemeka Obi"
             value={formValues.full_name}
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className={inputClass}
           />
           {state.errors?.full_name && (
-            <p className="text-red-500 text-xs mt-1.5">{state.errors.full_name[0]}</p>
+            <p className={errorClass}>{state.errors.full_name[0]}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Email Address
-          </label>
+          <label htmlFor="email" className={labelClass}>Email Address</label>
           <input
             id="email"
             name="email"
             type="email"
-            placeholder="Enter your email address"
+            placeholder="you@example.com"
             value={formValues.email}
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className={inputClass}
           />
           {state.errors?.email && (
-            <p className="text-red-500 text-xs mt-1.5">{state.errors.email[0]}</p>
+            <p className={errorClass}>{state.errors.email[0]}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Phone Number
-          </label>
+          <label htmlFor="phone" className={labelClass}>Phone Number</label>
           <input
             id="phone"
             name="phone"
@@ -98,25 +98,25 @@ export default function RegisterForm({ categories }: Props) {
             placeholder="e.g. 08012345678"
             value={formValues.phone}
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className={inputClass}
           />
           {state.errors?.phone && (
-            <p className="text-red-500 text-xs mt-1.5">{state.errors.phone[0]}</p>
+            <p className={errorClass}>{state.errors.phone[0]}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Select Category
+          <label htmlFor="category_id" className={labelClass}>
+            Assessment Category
           </label>
           <select
             id="category_id"
             name="category_id"
             value={formValues.category_id}
             onChange={handleChange}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
+            className={`${inputClass} bg-slate-900`}
           >
-            <option value="">-- Select your qualification category --</option>
+            <option value="">-- Select your qualification --</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name} — {category.description}
@@ -124,18 +124,17 @@ export default function RegisterForm({ categories }: Props) {
             ))}
           </select>
           {state.errors?.category_id && (
-            <p className="text-red-500 text-xs mt-1.5">{state.errors.category_id[0]}</p>
+            <p className={errorClass}>{state.errors.category_id[0]}</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
+          className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all hover:shadow-lg hover:shadow-emerald-500/25 mt-2"
         >
-          {isPending ? 'Registering...' : 'Register'}
+          {isPending ? 'Creating profile...' : 'Register & Continue →'}
         </button>
-
       </form>
     </div>
   )

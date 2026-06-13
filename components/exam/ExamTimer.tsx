@@ -11,7 +11,6 @@ export default function ExamTimer({ remainingSeconds, onTimeUp }: Props) {
   const [seconds, setSeconds] = useState(remainingSeconds)
   const onTimeUpRef = useRef(onTimeUp)
 
-  // Keep the ref current without triggering effect re-runs
   useEffect(() => {
     onTimeUpRef.current = onTimeUp
   }, [onTimeUp])
@@ -43,15 +42,18 @@ export default function ExamTimer({ remainingSeconds, onTimeUp }: Props) {
 
   return (
     <div
-      className={`px-4 py-2 rounded-xl font-mono font-bold text-lg ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-bold text-sm transition-all ${
         isCritical
-          ? 'bg-red-100 text-red-600 animate-pulse'
+          ? 'bg-red-500/10 border border-red-500/30 text-red-400 animate-pulse'
           : isWarning
-          ? 'bg-yellow-100 text-yellow-700'
-          : 'bg-blue-50 text-blue-700'
+          ? 'bg-yellow-500/10 border border-yellow-500/30 text-yellow-400'
+          : 'bg-white/5 border border-white/10 text-slate-300'
       }`}
     >
-      ⏱ {String(minutes).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      {String(minutes).padStart(2, '0')}:{String(secs).padStart(2, '0')}
     </div>
   )
 }

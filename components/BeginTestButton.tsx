@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import {beginExam} from "@/actions/exam"
+import { beginExam } from '@/actions/exam'
 
 type Props = {
   candidateId: string
@@ -31,13 +31,13 @@ export default function BeginTestButton({
     <button
       onClick={handleBegin}
       disabled={isPending}
-      className="w-full bg-blue-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl transition-all hover:shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-0.5 active:translate-y-0 text-lg"
     >
       {isPending
         ? 'Preparing your exam...'
         : hasExistingAttempt
-        ? 'Resume Exam'
-        : 'Begin Test'}
+        ? '▶ Resume Exam'
+        : '▶ Begin Test'}
     </button>
   )
 }
