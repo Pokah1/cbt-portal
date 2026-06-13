@@ -10,13 +10,19 @@ type Props = {
 
 export default function DeleteCandidateButton({ candidateId }: Props) {
   const [showModal, setShowModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   function handleDelete() {
+    setError(null)
     startTransition(async () => {
-      await deleteCandidate(candidateId)
-      router.push('/admin')
+      const result = await deleteCandidate(candidateId)
+      if (result.success) {
+        router.push('/admin')
+      } else {
+        setError(result.error ?? 'Something went wrong. Please try again.')
+      }
     })
   }
 
@@ -32,7 +38,6 @@ export default function DeleteCandidateButton({ candidateId }: Props) {
         Delete Candidate
       </button>
 
-      {/* Confirm modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-white/10 rounded-2xl shadow-2xl p-8 max-w-md w-full">
@@ -51,9 +56,18 @@ export default function DeleteCandidateButton({ candidateId }: Props) {
               data including attempts and answers. This cannot be undone.
             </p>
 
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm mb-4">
+                {error}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false)
+                  setError(null)
+                }}
                 disabled={isPending}
                 className="flex-1 px-4 py-3 rounded-xl border border-white/10 text-slate-300 font-semibold hover:bg-white/5 transition-colors disabled:opacity-50"
               >
