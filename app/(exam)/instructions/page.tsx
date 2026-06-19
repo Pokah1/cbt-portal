@@ -53,10 +53,7 @@ export default async function InstructionsPage() {
 
   const rules = [
     'The timer begins immediately when you click Begin Test.',
-    'You can navigate freely between questions within the time limit.',
-    'Your answers are saved automatically as you select them.',
     'You may change any answer before final submission.',
-    'The exam auto-submits when the timer reaches zero.',
     'Switching tabs is monitored — 3 violations trigger auto-submission.',
     'Do not close or refresh the browser during the exam.',
     'You cannot retake the exam once submitted.',

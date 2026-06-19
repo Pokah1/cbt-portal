@@ -42,7 +42,7 @@ export default function ExamTimer({ remainingSeconds, onTimeUp }: Props) {
 
   return (
     <div
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-bold text-sm transition-all ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl font-mono font-extrabold text-md transition-all ${
         isCritical
           ? 'bg-red-500/10 border border-red-500/30 text-red-400 animate-pulse'
           : isWarning
@@ -53,7 +53,9 @@ export default function ExamTimer({ remainingSeconds, onTimeUp }: Props) {
       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      {String(minutes).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+       <span className="animate-bounce">
+    {String(minutes).padStart(2, '0')}:{String(secs).padStart(2, '0')}
+  </span>
     </div>
   )
 }

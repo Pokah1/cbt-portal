@@ -32,6 +32,7 @@ type Props = {
 
 const MAX_TAB_SWITCHES = 3
 
+
 export default function ExamClient({
   candidate,
   attempt,
@@ -48,6 +49,7 @@ export default function ExamClient({
     answeredCount,
     totalQuestions,
     isSubmitting,
+    isLocked,
     showCalculatorPanel,
     tabSwitchCount,
     showTabWarning,
@@ -91,6 +93,20 @@ export default function ExamClient({
         onCancel={dismissConfirmModal}
       />
 
+      {isLocked && (
+  <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[60] flex items-center justify-center p-4">
+    <div className="text-center">
+      <div className="w-16 h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mx-auto mb-6" />
+      <h2 className="text-xl font-bold text-white mb-2">
+        Submitting Your Exam
+      </h2>
+      <p className="text-slate-400 text-sm">
+        Maximum tab switches exceeded. Please wait...
+      </p>
+    </div>
+  </div>
+)}
+
       {/* Top bar */}
       <div className="bg-slate-900 border-b border-white/5 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -113,16 +129,18 @@ export default function ExamClient({
               </div>
             )}
             {showCalculator && (
-              <button
-                onClick={toggleCalculator}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all ${
-                  showCalculatorPanel
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                🧮 Calculator
-              </button>
+             <button
+  onClick={toggleCalculator}
+  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-bold transition-all ${
+    showCalculatorPanel
+      ? 'bg-emerald-500 text-white'
+      : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'
+  }`}
+>
+  🧮 <span className="text-red-600">Calculator</span>
+</button>
+
+
             )}
             <ExamTimer
               remainingSeconds={remainingSeconds}

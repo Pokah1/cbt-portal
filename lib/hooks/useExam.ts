@@ -29,6 +29,8 @@ export function useExam({ attemptId, questions, initialAnswers }: UseExamProps) 
   const [tabSwitchCount, setTabSwitchCount] = useState(0)
   const [showTabWarning, setShowTabWarning] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [isLocked, setIsLocked] = useState(false)
+
 
   const hasAutoSubmitted = useRef(false)
   const answersRef = useRef(answers)
@@ -67,30 +69,31 @@ export function useExam({ attemptId, questions, initialAnswers }: UseExamProps) 
     autoSubmit()
   }, [autoSubmit])
 
+
  useEffect(() => {
   async function handleVisibilityChange() {
     if (!document.hidden) return
 
     const result = await recordTabSwitch(attemptIdRef.current)
 
-    if (!result.success) return
-
     if (result.shouldAutoSubmit) {
-      routerRef.current.push('/results')
-      return
+      // Lock the UI immediately — before the async submit completes
+      setIsLocked(true)
+      if (!hasAutoSubmitted.current) {
+        hasAutoSubmitted.current = true
+        setIsSubmitting(true)
+        await submitExam(attemptIdRef.current, answersRef.current)
+        routerRef.current.push('/results')
+      }
+    } else {
+      setTabSwitchCount(result.count)
+      setShowTabWarning(true)
     }
-
-    setTabSwitchCount(result.count)
-    setShowTabWarning(true)
   }
 
   document.addEventListener('visibilitychange', handleVisibilityChange)
-
   return () =>
-    document.removeEventListener(
-      'visibilitychange',
-      handleVisibilityChange
-    )
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
 }, [])
 
   async function handleAnswer(questionId: string, option: string) {
@@ -130,6 +133,7 @@ export function useExam({ attemptId, questions, initialAnswers }: UseExamProps) 
     answeredCount,
     totalQuestions,
     isSubmitting,
+    isLocked,
     showCalculatorPanel,
     tabSwitchCount,
     showTabWarning,

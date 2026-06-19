@@ -183,42 +183,16 @@ export async function submitExam(
 }
 
 export async function recordTabSwitch(attemptId: string) {
-  const supabase = await createClient();
-  const adminSupabase = createAdminClient();
+  const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc("increment_tab_switches", {
+  const { data, error } = await supabase.rpc('increment_tab_switches', {
     attempt_id: attemptId,
-  });
+  })
 
-  if (error) {
-    return {
-      success: false,
-      count: 0,
-      shouldAutoSubmit: false,
-    };
-  }
+  if (error) return { success: false, count: 0, shouldAutoSubmit: false }
 
-  const count = data as number;
-  const shouldAutoSubmit = count >= 3;
+  const count = data as number
+  const shouldAutoSubmit = count >= 3
 
-  if (shouldAutoSubmit) {
-    const { data: existingAnswers } = await adminSupabase
-      .from("answers")
-      .select("question_id, selected_option")
-      .eq("attempt_id", attemptId);
-
-    const answersMap = Object.fromEntries(
-      (existingAnswers ?? [])
-        .filter((a) => a.selected_option)
-        .map((a) => [a.question_id, a.selected_option]),
-    );
-
-    await submitExam(attemptId, answersMap);
-  }
-
-  return {
-    success: true,
-    count,
-    shouldAutoSubmit,
-  };
+  return { success: true, count, shouldAutoSubmit }
 }
