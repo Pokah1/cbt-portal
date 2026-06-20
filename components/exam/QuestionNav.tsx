@@ -1,7 +1,4 @@
-type Question = {
-  id: string
-  section_title: string
-}
+import { Question } from '@/types/exam'
 
 type Props = {
   questions: Question[]

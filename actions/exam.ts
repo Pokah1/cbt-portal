@@ -2,7 +2,8 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
-import { sendResultEmails } from '@/lib/emails/sendResultEmails'
+// import { sendResultEmails } from '@/lib/emails/sendResultEmails'
+
 
 export async function beginExam(candidateId: string, examId: string) {
   const supabase = await createClient()
@@ -18,9 +19,31 @@ export async function beginExam(candidateId: string, examId: string) {
     return { success: true, attemptId: existingAttempt.id }
   }
 
+  // Fetch sections IN ORDER, with their questions
+  const { data: sections } = await supabase
+    .from('sections')
+    .select('id, order_index, questions(id)')
+    .eq('exam_id', examId)
+    .order('order_index')
+
+  // Shuffle questions WITHIN each section, but keep section order fixed
+  const questionOrder = (sections ?? []).flatMap((section) => {
+    const questionIds = (section.questions as { id: string }[]).map((q) => q.id)
+    const shuffledQuestionIds = shuffleArray(questionIds)
+
+    return shuffledQuestionIds.map((questionId) => ({
+      questionId,
+      optionOrder: shuffleArray(['A', 'B', 'C', 'D']),
+    }))
+  })
+
   const { data, error } = await supabase
     .from('attempts')
-    .insert({ candidate_id: candidateId, exam_id: examId })
+    .insert({
+      candidate_id: candidateId,
+      exam_id: examId,
+      question_order: questionOrder,
+    })
     .select('id')
     .single()
 
@@ -30,6 +53,16 @@ export async function beginExam(candidateId: string, examId: string) {
 
   return { success: true, attemptId: data.id }
 }
+
+function shuffleArray<T>(array: T[]): T[] {
+  const result = [...array]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
 
 export async function saveAnswer(
   attemptId: string,
@@ -120,64 +153,65 @@ export async function submitExam(
     .eq('id', attemptId)
 
   // Fetch data needed for emails
-  const { data: candidate } = await supabase
-    .from('candidates')
-    .select('full_name, email, phone, category_id')
-    .eq('id', attempt.candidate_id)
-    .single()
+//   const { data: candidate } = await supabase
+//     .from('candidates')
+//     .select('full_name, email, phone, category_id')
+//     .eq('id', attempt.candidate_id)
+//     .single()
 
-  if (candidate) {
-    const { data: category } = await supabase
-      .from('categories')
-      .select('name')
-      .eq('id', candidate.category_id)
-      .single()
+//   if (candidate) {
+//     const { data: category } = await supabase
+//       .from('categories')
+//       .select('name')
+//       .eq('id', candidate.category_id)
+//       .single()
 
-    const { data: exam } = await supabase
-      .from('exams')
-      .select('title')
-      .eq('id', attempt.exam_id)
-      .single()
+//     const { data: exam } = await supabase
+//       .from('exams')
+//       .select('title')
+//       .eq('id', attempt.exam_id)
+//       .single()
 
-    // Build section breakdown for email
-    const { data: sectionData } = await supabase
-      .from('sections')
-      .select('title, order_index, questions(id, marks)')
-      .eq('exam_id', attempt.exam_id)
-      .order('order_index')
+//     // Build section breakdown for email
+//     const { data: sectionData } = await supabase
+//       .from('sections')
+//       .select('title, order_index, questions(id, marks)')
+//       .eq('exam_id', attempt.exam_id)
+//       .order('order_index')
 
-    const answersMap = Object.fromEntries(
-      answerUpdates.map((a) => [a.question_id, a])
-    )
+//     const answersMap = Object.fromEntries(
+//       answerUpdates.map((a) => [a.question_id, a])
+//     )
 
-    const sectionBreakdown = (sectionData ?? []).map((section) => {
-      const questions = section.questions as { id: string; marks: number }[]
-      const sectionTotal = questions.reduce((sum, q) => sum + q.marks, 0)
-      const sectionScore = questions.reduce((sum, q) => {
-        const answer = answersMap[q.id]
-        return sum + (answer?.is_correct ? q.marks : 0)
-      }, 0)
-      return {
-        title: section.title,
-        score: sectionScore,
-        total: sectionTotal,
-      }
-    })
+//     const sectionBreakdown = (sectionData ?? []).map((section) => {
+//       const questions = section.questions as { id: string; marks: number }[]
+//       const sectionTotal = questions.reduce((sum, q) => sum + q.marks, 0)
+//       const sectionScore = questions.reduce((sum, q) => {
+//         const answer = answersMap[q.id]
+//         return sum + (answer?.is_correct ? q.marks : 0)
+//       }, 0)
+//       return {
+//         title: section.title,
+//         score: sectionScore,
+//         total: sectionTotal,
+//       }
+//     })
 
-    if (category && exam) {
-      await sendResultEmails({
-        candidate,
-        category,
-        exam,
-        attempt: {
-          score,
-          total_marks: totalMarks,
-          submitted_at: submittedAt,
-        },
-        sectionBreakdown,
-      })
-    }
-  }
+//     // TODO: Re-enable before going live — disabled during testing to avoid hitting Resend free tier limits
+// if (category && exam) {
+//   await sendResultEmails({
+//     candidate,
+//     category,
+//     exam,
+//     attempt: {
+//       score,
+//       total_marks: totalMarks,
+//       submitted_at: submittedAt,
+//     },
+//     sectionBreakdown,
+//   })
+// }
+//   }
 
   return { success: true, score, totalMarks }
 }

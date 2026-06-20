@@ -7,18 +7,7 @@ import QuestionNav from '@/components/exam/QuestionNav'
 import Calculator from '@/components/exam/Calculator'
 import TabWarningModal from '@/components/exam/TabWarningModal'
 import SubmitConfirmModal from '@/components/exam/SubmitConfirmModal'
-
-type Question = {
-  id: string
-  body: string
-  option_a: string
-  option_b: string
-  option_c: string
-  option_d: string
-  order_index: number
-  section_id: string
-  section_title: string
-}
+import { Question } from '@/types/exam'
 
 type Props = {
   candidate: { id: string; full_name: string; category_id: string }
@@ -31,7 +20,6 @@ type Props = {
 }
 
 const MAX_TAB_SWITCHES = 3
-
 
 export default function ExamClient({
   candidate,
@@ -69,6 +57,8 @@ export default function ExamClient({
     questions,
     initialAnswers,
   })
+
+  // ... rest of the component stays exactly the same
 
   return (
     <div
@@ -137,7 +127,7 @@ export default function ExamClient({
       : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'
   }`}
 >
-  🧮 <span className="text-red-600">Calculator</span>
+  🧮 <span className="text-slate-200">Calculator</span>
 </button>
 
 

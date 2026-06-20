@@ -1,27 +1,14 @@
-type Question = {
-  id: string
-  body: string
-  option_a: string
-  option_b: string
-  option_c: string
-  option_d: string
-  section_title: string
-}
+import { Question } from '@/types/exam'
 
 type Props = {
   question: Question
   questionNumber: number
   totalQuestions: number
   selectedOption: string | null
-  onAnswer: (option: string) => void
+  onAnswer: (originalLetter: string) => void
 }
 
-const options = [
-  { key: 'A', field: 'option_a' },
-  { key: 'B', field: 'option_b' },
-  { key: 'C', field: 'option_c' },
-  { key: 'D', field: 'option_d' },
-] as const
+const displayLetters = ['A', 'B', 'C', 'D']
 
 export default function QuestionCard({
   question,
@@ -47,12 +34,14 @@ export default function QuestionCard({
       </p>
 
       <div className="space-y-2.5">
-        {options.map(({ key, field }) => {
-          const isSelected = selectedOption === key
+        {question.shuffledOptions.map((option, index) => {
+          const displayLetter = displayLetters[index]
+          const isSelected = selectedOption === option.originalLetter
+
           return (
             <button
-              key={key}
-              onClick={() => onAnswer(key)}
+              key={option.originalLetter}
+              onClick={() => onAnswer(option.originalLetter)}
               className={`w-full text-left px-4 py-3.5 rounded-xl border transition-all flex items-center gap-3 group ${
                 isSelected
                   ? 'border-emerald-500 bg-emerald-500/10 text-white'
@@ -66,9 +55,9 @@ export default function QuestionCard({
                     : 'bg-white/5 text-slate-400 group-hover:bg-white/10'
                 }`}
               >
-                {key}
+                {displayLetter}
               </span>
-              <span className="text-sm">{question[field]}</span>
+              <span className="text-sm">{option.content}</span>
             </button>
           )
         })}
