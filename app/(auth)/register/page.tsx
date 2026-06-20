@@ -12,7 +12,7 @@ export default async function RegisterPage() {
     .order('name')
 
   return (
-    <main className="min-h-screen bg-slate-950 relative overflow-hidden">
+    <main className="min-h-screen bg-slate-950 relative overflow-hidden flex flex-col">
 
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -21,7 +21,7 @@ export default async function RegisterPage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto">
+      <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto w-full flex-shrink-0">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -32,34 +32,39 @@ export default async function RegisterPage() {
         </Link>
       </nav>
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
+      {/* Content — fills remaining viewport height */}
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-6">
+        <div className="w-full max-w-5xl">
 
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-extrabold text-white mb-2">
-              Create Your Profile
+          <div className="text-center mb-6">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-1.5">
+              Get Started
             </h1>
             <p className="text-slate-400 text-sm">
-              Register to access your assessment
+              Register as a new candidate or resume an existing session
             </p>
           </div>
 
-          {/* Registration form */}
-          <RegisterForm categories={categories ?? []} />
+          {/* Two-column layout on large screens, stacked on mobile */}
+          <div className="flex flex-col lg:flex-row gap-5 lg:items-stretch">
+            <div className="flex-1">
+              <RegisterForm categories={categories ?? []} />
+            </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-slate-500 text-xs font-medium uppercase tracking-widest">
-              or
-            </span>
-            <div className="flex-1 h-px bg-white/10" />
+            {/* Divider — vertical on desktop, horizontal on mobile */}
+            <div className="flex lg:flex-col items-center gap-3 lg:gap-0">
+              <div className="flex-1 lg:flex-none lg:flex-1 h-px lg:h-auto lg:w-px bg-white/10" />
+              <span className="text-slate-500 text-xs font-medium uppercase tracking-widest px-2 lg:py-2">
+                or
+              </span>
+              <div className="flex-1 lg:flex-none lg:flex-1 h-px lg:h-auto lg:w-px bg-white/10" />
+            </div>
+
+            <div className="flex-1">
+              <ResumeForm />
+            </div>
           </div>
-
-          {/* Resume form */}
-          <ResumeForm />
 
         </div>
       </div>

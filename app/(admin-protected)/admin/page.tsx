@@ -96,12 +96,6 @@ export default async function AdminDashboardPage() {
               / Admin
             </span>
           </div>
-           <Link
-              href="/admin/questions"
-              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-xl transition-colors"
-            >
-              📝 Manage Questions
-            </Link>
           <form action={adminLogout}>
             <button
               type="submit"
@@ -122,20 +116,38 @@ export default async function AdminDashboardPage() {
               </svg>
               Sign Out
             </button>
-           
           </form>
-          
         </div>
       </div>
-      
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Page title */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-extrabold text-white">Dashboard</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Overview of all assessment submissions
-          </p>
+        {/* Page title + primary action */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-extrabold text-white">Dashboard</h1>
+            <p className="text-slate-400 text-sm mt-1">
+              Overview of all assessment submissions
+            </p>
+          </div>
+          <Link
+            href="/admin/questions"
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm rounded-xl transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Manage Questions
+          </Link>
         </div>
 
         {/* Stats */}
