@@ -1,113 +1,95 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
+import {
+  getCandidate,
+  getCategoryAndExam,
+  getAttempt,
+  getSectionsAndAnswers,
+  autoSubmitExpiredAttempt,
+  buildSectionBreakdown,
+  calculateStatistics,
+  checkTimeExpired,
+} from '@/lib/results'
+
+import type { AnswerRow, SectionWithQuestions } from '@/types/results'
 
 export default async function ResultsPage() {
   const cookieStore = await cookies()
   const candidateId = cookieStore.get('candidate_id')?.value
-
   if (!candidateId) redirect('/register')
 
   const supabase = await createClient()
 
-  const { data: candidate } = await supabase
-    .from('candidates')
-    .select('id, full_name, email, category_id')
-    .eq('id', candidateId)
-    .single()
-
+  // Fetch candidate first — everything depends on their category
+  const candidate = await getCandidate(supabase, candidateId)
   if (!candidate) redirect('/register')
 
-  const { data: category } = await supabase
-    .from('categories')
-    .select('name')
-    .eq('id', candidate.category_id)
-    .single()
-
-  const { data: exam } = await supabase
-    .from('exams')
-    .select('id, title')
-    .eq('category_id', candidate.category_id)
-    .single()
-
+  // Fetch category and exam in parallel
+  const { category, exam } = await getCategoryAndExam(
+    supabase,
+    candidate.category_id
+  )
   if (!exam) redirect('/register')
 
-  const { data: attempt } = await supabase
-    .from('attempts')
-    .select('id, score, total_marks, started_at, submitted_at, is_completed')
-    .eq('candidate_id', candidateId)
-    .eq('exam_id', exam.id)
-    .eq('is_completed', true)
-    .maybeSingle()
-
+  // Fetch attempt
+  let attempt = await getAttempt(supabase, candidateId, exam.id)
   if (!attempt) redirect('/instructions')
 
-  const { data: sections } = await supabase
-    .from('sections')
-    .select('id, title, order_index, questions(id, marks)')
-    .eq('exam_id', exam.id)
-    .order('order_index')
+  // Handle incomplete attempt
+  if (!attempt.is_completed) {
+    const timeExpired = checkTimeExpired(
+      attempt.started_at,
+      exam.duration_minutes
+    )
 
-  const { data: answers } = await supabase
-    .from('answers')
-    .select('question_id, selected_option, is_correct')
-    .eq('attempt_id', attempt.id)
+    if (!timeExpired) redirect('/test')
 
-  const answersMap = Object.fromEntries(
-    (answers ?? []).map((a) => [a.question_id, a])
+    // Force-complete server-side with race condition protection
+    const adminSupabase = createAdminClient()
+    attempt = await autoSubmitExpiredAttempt(adminSupabase, attempt, exam.id)
+  }
+
+  // Fetch sections and answers in parallel
+  const { sections, answers } = await getSectionsAndAnswers(
+    supabase,
+    exam.id,
+    attempt.id
   )
 
-  const sectionBreakdown = (sections ?? []).map((section) => {
-    const questions = section.questions as { id: string; marks: number }[]
-    const sectionTotal = questions.reduce((sum, q) => sum + q.marks, 0)
-    const sectionScore = questions.reduce(
-      (sum, q) => sum + (answersMap[q.id]?.is_correct ? q.marks : 0),
-      0
-    )
-    const attempted = questions.filter(
-      (q) => answersMap[q.id]?.selected_option
-    ).length
-    return {
-      title: section.title,
-      score: sectionScore,
-      total: sectionTotal,
-      attempted,
-      questionCount: questions.length,
-    }
-  })
+  // Build a Map for O(1) lookups — used by both breakdown and stats
+  const answersMap = new Map(
+    answers.map((a) => [a.question_id, a])
+  )
 
-  const score = attempt.score ?? 0
-  const totalMarks = attempt.total_marks ?? 0
-  const percentage =
-    totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0
-  const passed = percentage >= 50
+  const sectionBreakdown = buildSectionBreakdown(
+    sections as SectionWithQuestions[],
+    answersMap
+  )
 
-  const timeTaken =
-    attempt.submitted_at && attempt.started_at
-      ? Math.round(
-          (new Date(attempt.submitted_at).getTime() -
-            new Date(attempt.started_at).getTime()) /
-            1000 / 60
-        )
-      : null
+  const stats = calculateStatistics(attempt, answers as AnswerRow[])
 
-  const correctCount = answers?.filter((a) => a.is_correct).length ?? 0
-  const incorrectCount =
-    answers?.filter((a) => a.selected_option && !a.is_correct).length ?? 0
-  const attemptedCount =
-    answers?.filter((a) => a.selected_option).length ?? 0
+  const {
+    score,
+    totalMarks,
+    percentage,
+    passed,
+    timeTaken,
+    correctCount,
+    incorrectCount,
+    attemptedCount,
+  } = stats
 
   return (
     <main className="min-h-screen bg-slate-950 relative overflow-hidden">
 
-      {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className={`absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl ${passed ? 'bg-emerald-500/10' : 'bg-red-500/10'}`} />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-slate-800/30 rounded-full blur-3xl" />
       </div>
 
-      {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
@@ -121,7 +103,6 @@ export default async function ResultsPage() {
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 space-y-4">
 
-        {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-3xl font-extrabold text-white mb-1">
             Assessment Complete
@@ -237,7 +218,7 @@ export default async function ResultsPage() {
           </div>
         </div>
 
-        {/* Footer note */}
+        {/* Footer */}
         <div className="text-center py-4">
           <p className="text-slate-500 text-sm leading-relaxed">
             Your results have been recorded and sent to your email.

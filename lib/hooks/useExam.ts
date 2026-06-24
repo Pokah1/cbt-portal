@@ -1,18 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { saveAnswer, submitExam, recordTabSwitch } from '@/actions/exam'
-
-type Question = {
-  id: string
-  body: string
-  option_a: string
-  option_b: string
-  option_c: string
-  option_d: string
-  order_index: number
-  section_id: string
-  section_title: string
-}
+import { Question } from "@/types/exam"
 
 type UseExamProps = {
   attemptId: string
