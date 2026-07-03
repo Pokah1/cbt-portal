@@ -112,6 +112,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## Used UptimeRobot to prevent Supabase project pausing on free tier"
+https://dashboard.uptimerobot.com/monitors
+
 ## License
 
 MIT
